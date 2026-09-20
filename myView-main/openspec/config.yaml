@@ -1,0 +1,91 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+context: |
+  Markdown Viewer: a standalone Windows desktop app (Python + pywebview) that behaves like
+  Kate's/VS Code's markdown preview, but adds a folder tree, dual raw/rendered view, live-reload,
+  and a "smart select -> copy reference" feature aimed at pasting file:line references into
+  Claude Code.
+
+  Tech stack:
+    - App shell / window: pywebview (uses WebView2 on Windows)
+    - File watching: watchdog
+    - Markdown rendering: markdown-it-py + mdit-py-plugins (tasklists, footnotes) + linkify-it-py
+    - Syntax highlighting: Pygments (server-side) or highlight.js (client-side)
+    - Frontend: plain HTML/CSS/JS injected into the webview (no framework needed)
+    - Packaging: pyinstaller -> single .exe
+
+  Layout: main pane (Raw / Rendered / Both view-mode toggle) + right-hand folder/file tree
+  scoped to the opened folder and filtered to .md files, collapsible per directory.
+
+  Key features: open folder (recursive .md scan), file selection with three view modes
+  (Raw/Rendered/Both, last-used mode persists per session), live-reload via watchdog with
+  150-300ms debounce, smart-select "copy reference" (reference-only or reference+content,
+  always raw source line numbers, forward-slash paths, single-line uses range form
+  path:12-12), keyboard shortcuts (Ctrl+1/2/3 view modes, Ctrl+C reference-only,
+  Ctrl+Shift+C reference+content, with fallback to normal copy when focus is in a plain
+  text field), and scroll sync in Both view via data-line="start-end" tags from
+  markdown-it's token.map.
+
+  Non-goals for this version: editing markdown (view-only), syncing scroll with an external
+  editor like Kate, multi-window/multi-folder tabs.
+
+  Coding style: Follow the Google Python Style Guide. Beyond it, three project rules are
+  non-negotiable:
+    - No nested function or method definitions. Never declare a function inside another
+      function or a method inside a method. Extract it to module level (private,
+      _leading_underscore) instead. The one tolerated exception is the existing lazy-import
+      pattern in default_workflow(), which imports rather than defines.
+    - No complicated return types. Do not return a bare tuple, a dict of mixed-meaning keys,
+      or a nested list[dict] as a function's contract. Anything with more than one meaningful
+      field gets a real Python class -- a @dataclass (the pattern already used by StepResult,
+      StepConfig, WorkflowStep, ExtractionData in pipeline/base.py and pipeline/workflow.py)
+      or a Pydantic model where validation is needed. Name the fields; do not make callers
+      unpack positionally or index by string key.
+    - Type-annotate public functions and dataclass fields -- pyright is the only static check
+      this project has, so annotations are what make it useful.
+
+  Testing: this project deliberately keeps no permanent test suite. pytest is a dev
+  dependency and pyproject.toml declares one marker (integration), but no tests are tracked
+  in git. Writing a throwaway test or script to verify an implementation while working is
+  fine -- delete it before the change is complete. Never propose adding a lasting test file,
+  a tests/ tree, or a CI test job. Verification is by runnable command with observable output.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Keep proposals under 500 words
+    - Always include a "Non-goals" section
+  tasks:
+    - Break tasks into chunks of max 2 hours
+  design:
+    - Follow the Google Python Style Guide
+    - No nested function or method definitions; extract to module level as a private
+      (_leading_underscore) function instead, except the lazy-import pattern in
+      default_workflow()
+    - No complicated return types; use a @dataclass or Pydantic model with named fields
+      instead of a bare tuple, mixed-meaning dict, or nested list[dict]
+    - Type-annotate all public functions and dataclass fields
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+operations:
+  apply:
+    guidance:
+      - Follow the Google Python Style Guide
+      - No nested function or method definitions; extract to module level as a private
+        (_leading_underscore) function instead, except the lazy-import pattern in
+        default_workflow()
+      - No complicated return types; use a @dataclass or Pydantic model with named fields
+        instead of a bare tuple, mixed-meaning dict, or nested list[dict]
+      - Type-annotate all public functions and dataclass fields
+      - Do not write a lasting test suite; throwaway verification scripts are fine but must
+        be deleted before the change is complete
+      - Keep test summaries concise
+  archive:
+    guidance:
+      - Summarize the archive outcome before finishing

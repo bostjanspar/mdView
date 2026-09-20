@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Markdown Viewer</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <header id="toolbar">
+    <button id="open-folder-btn" type="button">Open Folder…</button>
+    <fieldset id="view-mode-toggle">
+      <legend class="sr-only">View mode</legend>
+      <input type="radio" name="view-mode" id="view-mode-raw" class="view-mode-input" value="raw" checked>
+      <label for="view-mode-raw" class="view-mode-label">Raw</label>
+      <input type="radio" name="view-mode" id="view-mode-rendered" class="view-mode-input" value="rendered">
+      <label for="view-mode-rendered" class="view-mode-label">Rendered</label>
+      <input type="radio" name="view-mode" id="view-mode-both" class="view-mode-input" value="both">
+      <label for="view-mode-both" class="view-mode-label">Both</label>
+    </fieldset>
+    <button id="flip-panes-btn" type="button" hidden title="Swap pane order">Flip</button>
+    <fieldset id="font-toggle">
+      <legend class="sr-only">Code font</legend>
+      <input type="radio" name="font-choice" id="font-jetbrains-mono" class="font-choice-input" value="jetbrains-mono">
+      <label for="font-jetbrains-mono" class="font-choice-label">JetBrains Mono</label>
+      <input type="radio" name="font-choice" id="font-cascadia-mono" class="font-choice-input" value="cascadia-mono">
+      <label for="font-cascadia-mono" class="font-choice-label">Cascadia Mono</label>
+      <input type="radio" name="font-choice" id="font-system-mono" class="font-choice-input" value="system-mono">
+      <label for="font-system-mono" class="font-choice-label">System</label>
+    </fieldset>
+    <button id="tree-pane-toggle-btn" type="button" aria-pressed="true" title="Show/hide file tree">Files</button>
+  </header>
+  <main id="layout">
+    <section id="content-area">
+      <div id="empty-state" class="empty-state">Open a folder to get started.</div>
+      <pre id="raw-view" class="raw-view" hidden></pre>
+      <div id="rendered-view" class="rendered-view" hidden></div>
+    </section>
+    <aside id="tree-pane">
+      <div id="tree-empty-state" class="empty-state">No folder open.</div>
+      <ul id="tree-root" class="tree-root" hidden></ul>
+    </aside>
+  </main>
+  <ul id="copy-context-menu" class="context-menu" hidden>
+    <li data-action="reference">Copy Reference</li>
+    <li data-action="reference-content">Copy Reference with Content</li>
+  </ul>
+  <div id="toast" class="toast" hidden></div>
+  <script src="tree.js"></script>
+  <script src="app.js"></script>
+  <script src="sync.js"></script>
+  <script src="copy.js"></script>
+</body>
+</html>
