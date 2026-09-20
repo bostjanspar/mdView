@@ -33,24 +33,40 @@ _GMEM_MOVEABLE = 0x0002
 
 
 def _set_clipboard_text(text: str) -> None:
-    """Write `text` to the Windows clipboard as Unicode text, via the Win32 API."""
-    kernel32 = ctypes.windll.kernel32
-    user32 = ctypes.windll.user32
-    kernel32.GlobalAlloc.restype = ctypes.c_void_p
-    kernel32.GlobalLock.restype = ctypes.c_void_p
-    kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
-    kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
-    user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
+    """Write `text` to the clipboard. Supports Windows via Win32 API, and other platforms via pywebview or fallback."""
+    if hasattr(ctypes, "windll"):
+        kernel32 = ctypes.windll.kernel32
+        user32 = ctypes.windll.user32
+        kernel32.GlobalAlloc.restype = ctypes.c_void_p
+        kernel32.GlobalLock.restype = ctypes.c_void_p
+        kernel32.GlobalLock.argtypes = [ctypes.c_void_p]
+        kernel32.GlobalUnlock.argtypes = [ctypes.c_void_p]
+        user32.SetClipboardData.argtypes = [ctypes.c_uint, ctypes.c_void_p]
 
-    encoded = text.encode("utf-16-le") + b"\x00\x00"
-    handle = kernel32.GlobalAlloc(_GMEM_MOVEABLE, len(encoded))
-    pointer = kernel32.GlobalLock(handle)
-    ctypes.memmove(pointer, encoded, len(encoded))
-    kernel32.GlobalUnlock(handle)
-    user32.OpenClipboard(0)
-    user32.EmptyClipboard()
-    user32.SetClipboardData(_CF_UNICODETEXT, handle)
-    user32.CloseClipboard()
+        encoded = text.encode("utf-16-le") + b"\x00\x00"
+        handle = kernel32.GlobalAlloc(_GMEM_MOVEABLE, len(encoded))
+        pointer = kernel32.GlobalLock(handle)
+        ctypes.memmove(pointer, encoded, len(encoded))
+        kernel32.GlobalUnlock(handle)
+        user32.OpenClipboard(0)
+        user32.EmptyClipboard()
+        user32.SetClipboardData(_CF_UNICODETEXT, handle)
+        user32.CloseClipboard()
+    else:
+        # On Linux/macOS, try using subprocess with xclip, xsel, or wl-copy
+        import subprocess
+        for cmd in [
+            ["wl-copy"],
+            ["xclip", "-selection", "clipboard"],
+            ["xsel", "--clipboard", "--input"],
+        ]:
+            try:
+                process = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                process.communicate(input=text.encode("utf-8"), timeout=1)
+                if process.returncode == 0:
+                    break
+            except (FileNotFoundError, OSError, subprocess.SubprocessError):
+                continue
 
 
 @dataclass
@@ -244,6 +260,11 @@ class App:
         file_content = read_text_lossy(open_file)
         reference = build_reference_with_content(file_content, lines)
         text = reference.to_clipboard_text()
+        _set_clipboard_text(text)
+        return text
+
+    def copy_plain_text(self, text: str) -> str:
+        """Copy arbitrary plain text (e.g. text selection) to the clipboard."""
         _set_clipboard_text(text)
         return text
 

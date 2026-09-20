@@ -42,6 +42,24 @@
       });
   }
 
+  function copyPlainText() {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      return;
+    }
+    const text = selection.toString();
+    if (!text) {
+      return;
+    }
+    api()
+      .copy_plain_text(text)
+      .then(function (result) {
+        if (result) {
+          showToast("Copied");
+        }
+      });
+  }
+
   function containerOf(node) {
     if (node && rawView.contains(node)) {
       return "raw";
@@ -164,6 +182,10 @@
     const item = event.target.closest("[data-action]");
     hideContextMenu();
     if (!item || item.classList.contains("disabled")) {
+      return;
+    }
+    if (item.dataset.action === "copy-plain") {
+      copyPlainText();
       return;
     }
     const start = Number(contextMenu.dataset.start);
